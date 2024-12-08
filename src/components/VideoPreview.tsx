@@ -16,7 +16,8 @@ export function VideoPreview({stream, elmentId, elmentCopy}: VideoPreviewProps) 
     }, [stream]);
 
     return (
-        <div className="relative w-full max-w-md aspect-video bg-gray-900 rounded-lg overflow-hidden">
+        // aspect-video
+        <div className="relative w-full max-w-md  bg-gray-900 rounded-lg overflow-hidden">
             {/* Video Element */}
             <video
                 ref={videoRef}

@@ -9,7 +9,7 @@ export function useCamera() {
     async function getDevices() {
       try {
         //仅只是为了获取权限
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+        await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');

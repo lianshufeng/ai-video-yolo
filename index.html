@@ -105,7 +105,6 @@
         const ApiUrl = "https://yolo.api.jpy.wang/detect";
 
 
-
         window.inferenceStatus = false;
 
 
@@ -129,6 +128,11 @@
             // 设置高质量的渲染
             ctx.imageSmoothingEnabled = true; // 启用抗锯齿
             ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
+
+            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
         }, 1000)
 
         window.callApi = function () {
@@ -138,8 +142,11 @@
             }
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
+
+
             // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
             const dpr = window.devicePixelRatio || 1;
             // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
@@ -151,6 +158,23 @@
             ctx.imageSmoothingEnabled = true; // 启用抗锯齿
             ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+            // const videoWidth = video.videoWidth;
+            // const videoHeight = video.videoHeight;
+            // // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
+            // const dpr = window.devicePixelRatio || 1;
+            // // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
+            // canvas.width = videoWidth * dpr;
+            // canvas.height = videoHeight * dpr;
+            // // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
+            // ctx.scale(dpr, dpr);
+            // // 设置高质量的渲染
+            // ctx.imageSmoothingEnabled = true; // 启用抗锯齿
+            // ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
+
+            //画布
+            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // 异步
             canvas.toBlob((blob) => {
@@ -197,6 +221,7 @@
                                 .filter((it) => it.confidence > 0.6)
                                 .forEach(obj => {
                                     const [x1, y1, x2, y2] = obj.bounding_box;
+
                                     const label = obj.label;
 
                                     // 设置线框样式
@@ -212,7 +237,7 @@
                                     ctx.font = '50px Arial';
                                     const title = labels[label] + ' ' + obj.confidence.toFixed(4);
 
-                                    ctx.fillText(title, x1, y1 + 50); // 标签显示位置
+                                    ctx.fillText(title, x1, y1+50 ); // 标签显示位置
                                 });
                         }
 
