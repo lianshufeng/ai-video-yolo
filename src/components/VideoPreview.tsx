@@ -1,4 +1,4 @@
-import {useRef, useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 
 interface VideoPreviewProps {
     stream: MediaStream | null;
@@ -24,6 +24,9 @@ export function VideoPreview({stream, elmentId, elmentCopy}: VideoPreviewProps) 
                 id={elmentId}
                 autoPlay
                 playsInline
+                // style={{
+                //     objectFit: "contain" // 使用驼峰命名
+                // }}
                 className="w-full h-full object-cover"
             />
 

@@ -116,18 +116,37 @@
                 return;
             }
             const ctx = canvas.getContext('2d');
+
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
-            // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
             const dpr = window.devicePixelRatio || 1;
-            // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
+            canvas.style.width = `${videoWidth}px`;
+            canvas.style.height = `${videoHeight}px`;
             canvas.width = videoWidth * dpr;
             canvas.height = videoHeight * dpr;
             // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
-            ctx.scale(dpr, dpr);
+            // ctx.scale(dpr, dpr);
             // 设置高质量的渲染
             ctx.imageSmoothingEnabled = true; // 启用抗锯齿
             ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
+
+
+            //-----
+            // const videoWidth = video.videoWidth;
+            // const videoHeight = video.videoHeight;
+            // // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
+            // const dpr = window.devicePixelRatio || 1;
+            // // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
+            // canvas.width = videoWidth * dpr;
+            // canvas.height = videoHeight * dpr;
+            // // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
+            // // ctx.scale(dpr, dpr);
+            // // 设置高质量的渲染
+            // ctx.imageSmoothingEnabled = true; // 启用抗锯齿
+            // ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
+
+            // document.getElementById('result').innerText = video.videoWidth + ',' + video.videoHeight
+
 
             // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -143,41 +162,59 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
+            // 计算客户端宽度与视频宽度与高度
+            const widthRatio = video.clientWidth / video.videoWidth
+            const heightRatio = video.clientHeight / video.videoHeight
+
+
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
 
 
             // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
-            const dpr = window.devicePixelRatio || 1;
-            // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
-            canvas.width = videoWidth * dpr;
-            canvas.height = videoHeight * dpr;
-            // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
-            ctx.scale(dpr, dpr);
-            // 设置高质量的渲染
-            ctx.imageSmoothingEnabled = true; // 启用抗锯齿
-            ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-
-            // const videoWidth = video.videoWidth;
-            // const videoHeight = video.videoHeight;
-            // // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
             // const dpr = window.devicePixelRatio || 1;
             // // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
-            // canvas.width = videoWidth * dpr;
-            // canvas.height = videoHeight * dpr;
+            // canvas.width = video.clientWidth * dpr;
+            // canvas.height = video.clientHeight * dpr;
             // // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
             // ctx.scale(dpr, dpr);
             // // 设置高质量的渲染
             // ctx.imageSmoothingEnabled = true; // 启用抗锯齿
             // ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
-
-            //画布
             // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+            //画布,直接画？//todo ,似乎行但是分辨率有点问题
+            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+            const dpr = window.devicePixelRatio || 1;
+            canvas.style.width = `${videoWidth}px`;
+            canvas.style.height = `${videoHeight}px`;
+            canvas.width = videoWidth * dpr;
+            canvas.height = videoHeight * dpr;
+            // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
+            // ctx.scale(dpr, dpr);
+            // 设置高质量的渲染
+            ctx.imageSmoothingEnabled = true; // 启用抗锯齿
+            ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // 异步
             canvas.toBlob((blob) => {
+
+                // 判断 blob 是否为空
+                if (!blob) {
+                    if (inferenceStatus) {
+                        setTimeout((it) => {
+                            requestAnimationFrame(callApi)
+                        }, 1000)
+                    }
+                    return
+                }
+
+
                 // 创建一个FormData对象
                 const formData = new FormData();
                 formData.append('image', blob, new Date().getTime() + '.jpg');
@@ -202,7 +239,12 @@
                             return acc;
                         }, {});
                         // 显示数量
-                        document.getElementById('result').innerText = JSON.stringify(labelCounts);
+                        // document.getElementById('result').innerText = videoWidth + ',' + videoHeight +' -> '+ JSON.stringify(labelCounts);
+                        // const tips = window.devicePixelRatio + '-' + videoWidth + ',' + videoHeight + ' -> ' + JSON.stringify(data.detected_objects);
+                        // console.log(tips)
+                        const tips = JSON.stringify(data.detected_objects);
+                        document.getElementById('result').innerText = tips
+
 
                         // 绘制线框
                         function drawBoundingBoxes() {
@@ -220,13 +262,21 @@
                                 // .filter((it) => ['person', 'cat', 'bird', 'dog'].includes(it.label))
                                 .filter((it) => it.confidence > 0.6)
                                 .forEach(obj => {
-                                    const [x1, y1, x2, y2] = obj.bounding_box;
+                                    let [x1, y1, x2, y2] = obj.bounding_box;
+                                    x1 = x1 * widthRatio;
+                                    y1 = y1 * heightRatio;
+                                    x2 = x2 * widthRatio;
+                                    y2 = y2 * heightRatio;
+
+                                    // x2 = x2 * window.devicePixelRatio
+                                    // y2 = y2 * window.devicePixelRatio
+
 
                                     const label = obj.label;
 
                                     // 设置线框样式
                                     ctx.strokeStyle = 'red'; // 线框颜色
-                                    ctx.lineWidth = 5;
+                                    ctx.lineWidth = 2 * dpr;
                                     ctx.setLineDash([]); // 取消虚线
 
                                     // 绘制边框
@@ -234,10 +284,9 @@
 
                                     // 绘制标签
                                     ctx.fillStyle = 'white'; // 标签背景色
-                                    ctx.font = '50px Arial';
-                                    const title = labels[label] + ' ' + obj.confidence.toFixed(4);
-
-                                    ctx.fillText(title, x1, y1+50 ); // 标签显示位置
+                                    ctx.font = (10 * dpr) + 'px Arial';
+                                    const title = labels[label] + ' ' + obj.confidence.toFixed(3);
+                                    ctx.fillText(title, x1, y1 + 20 * dpr); // 标签显示位置
                                 });
                         }
 

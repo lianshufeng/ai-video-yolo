@@ -1,58 +1,58 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 
 export function useCamera() {
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string>('');
-  const [stream, setStream] = useState<MediaStream | null>(null);
+    const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+    const [selectedDevice, setSelectedDevice] = useState<string>('');
+    const [stream, setStream] = useState<MediaStream | null>(null);
 
-  useEffect(() => {
-    async function getDevices() {
-      try {
-        //仅只是为了获取权限
-        await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+    useEffect(() => {
+        async function getDevices() {
+            try {
+                //仅只是为了获取权限
+                await navigator.mediaDevices.getUserMedia({audio: false, video: true})
 
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        setDevices(videoDevices);
-        if (videoDevices.length > 0) {
-          setSelectedDevice(videoDevices[0].deviceId);
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                setDevices(videoDevices);
+                if (videoDevices.length > 0) {
+                    setSelectedDevice(videoDevices[0].deviceId);
+                }
+            } catch (error) {
+                console.error('Error accessing camera devices:', error);
+            }
         }
-      } catch (error) {
-        console.error('Error accessing camera devices:', error);
-      }
-    }
 
-    getDevices();
-  }, []);
+        getDevices();
+    }, []);
 
-  useEffect(() => {
-    async function startCamera() {
-      if (!selectedDevice) return;
+    useEffect(() => {
+        async function startCamera() {
+            if (!selectedDevice) return;
 
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId: selectedDevice }
-        });
-        setStream(newStream);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-      }
-    }
+            try {
+                const newStream = await navigator.mediaDevices.getUserMedia({
+                    video: {deviceId: selectedDevice}
+                });
+                setStream(newStream);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+            }
+        }
 
-    startCamera();
+        startCamera();
 
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [selectedDevice]);
+
+    return {
+        devices,
+        selectedDevice,
+        stream,
+        setSelectedDevice
     };
-  }, [selectedDevice]);
-
-  return {
-    devices,
-    selectedDevice,
-    stream,
-    setSelectedDevice
-  };
 }
