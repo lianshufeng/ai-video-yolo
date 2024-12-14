@@ -101,8 +101,8 @@
         // const ApiUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
         // const ApiKey = "sk-1111"
         // const ApiModel = "qwen2-vl-7b-instruct"
-        // const ApiUrl = "http://127.0.0.1:5000/detect";
-        const ApiUrl = "https://yolo.api.jpy.wang/detect";
+        const ApiUrl = "http://127.0.0.1:5000/detect";
+        // const ApiUrl = "https://yolo.api.jpy.wang/detect";
 
 
         window.inferenceStatus = false;
@@ -131,30 +131,113 @@
             ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
 
 
-            //-----
-            // const videoWidth = video.videoWidth;
-            // const videoHeight = video.videoHeight;
-            // // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
-            // const dpr = window.devicePixelRatio || 1;
-            // // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
-            // canvas.width = videoWidth * dpr;
-            // canvas.height = videoHeight * dpr;
-            // // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
-            // // ctx.scale(dpr, dpr);
-            // // 设置高质量的渲染
-            // ctx.imageSmoothingEnabled = true; // 启用抗锯齿
-            // ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
-
-            // document.getElementById('result').innerText = video.videoWidth + ',' + video.videoHeight
-
-
-            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         }, 1000)
 
+
         window.callApi = function () {
+
+            // 画出关键点函数
+            const drawKeypoints = function (ctx, keypoints) {
+                keypoints.forEach((point, index) => {
+                    if (point[0] !== 0 && point[1] !== 0) {  // 忽略(0, 0)的点
+                        ctx.beginPath();
+                        ctx.arc(point[0], point[1], 5, 0, 2 * Math.PI);  // 画圆形
+                        ctx.fillStyle = getColorByPart(index);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            // 根据部位索引返回不同的颜色
+            const getColorByPart = function (index) {
+                // const colors = [
+                //     'red',    // 0: 鼻子
+                //     'green',  // 1: 左眼
+                //     'blue',   // 2: 右眼
+                //     'yellow', // 3: 左耳
+                //     'purple', // 4: 右耳
+                //     'orange', // 5: 左肩
+                //     'cyan',   // 6: 右肩
+                //     'pink',   // 7: 左肘
+                //     'brown',  // 8: 右肘
+                //     'gray',   // 9: 左腕
+                //     'lime',   // 10: 右腕
+                //     'magenta',// 11: 左髋
+                //     'darkblue', // 12: 右髋
+                //     'violet', // 13: 左膝
+                //     'indigo', // 14: 右膝
+                //     'darkgreen', // 15: 左脚踝
+                //     'darkred'  // 16: 右脚踝
+                // ];
+                // return colors[index] || 'black';  // 默认黑色
+
+                const colors = [
+                    'green',    // 0: 鼻子
+                    'green',  // 1: 左眼
+                    'green',   // 2: 右眼
+                    'green', // 3: 左耳
+                    'green', // 4: 右耳
+                    'blue', // 5: 左肩
+                    'blue',   // 6: 右肩
+                    'blue',   // 7: 左肘
+                    'blue',  // 8: 右肘
+                    'blue',   // 9: 左腕
+                    'blue',   // 10: 右腕
+                    'indigo',// 11: 左髋
+                    'indigo', // 12: 右髋
+                    'indigo', // 13: 左膝
+                    'indigo', // 14: 右膝
+                    'indigo', // 15: 左脚踝
+                    'indigo'  // 16: 右脚踝
+                ];
+                return colors[index] || 'blue';  // 默认黑色
+            }
+
+            // 画出关键点之间的连线
+            const drawSkeleton = function (ctx, keypoints) {
+                const connections = [
+                    [0, 1], [0, 2], // 鼻子 -> 左右眼
+                    [1, 3], [2, 4], // 左眼 -> 左耳, 右眼 -> 右耳
+                    [5, 6],          // 左肩 -> 右肩
+                    [5, 7], [6, 8],  // 左肩 -> 左肘, 右肩 -> 右肘
+                    [7, 9], [8, 10], // 左肘 -> 左腕, 右肘 -> 右腕
+                    [5, 11], [6, 12], // 左肩 -> 左髋, 右肩 -> 右髋
+                    [11, 13], [12, 14], // 左髋 -> 左膝, 右髋 -> 右膝
+                    [13, 15], [14, 16] // 左膝 -> 左脚踝, 右膝 -> 右脚踝
+                ];
+
+                connections.forEach(([startIdx, endIdx]) => {
+                    const start = keypoints[startIdx];
+                    const end = keypoints[endIdx];
+                    if (start[0] !== 0 && start[1] !== 0 && end[0] !== 0 && end[1] !== 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(start[0], start[1]);
+                        ctx.lineTo(end[0], end[1]);
+                        ctx.strokeStyle = 'lightblue'; // 线条颜色
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                });
+            }
+
+
+            const drawBoundingBox = function (ctx, box, label, confidence) {
+                const [x1, y1, x2, y2] = box;
+                // 设置线框样式
+                ctx.beginPath();
+                ctx.strokeStyle = 'red'; // 线框颜色
+                ctx.lineWidth = 2 * dpr;
+                ctx.setLineDash([]); // 取消虚线
+                // 绘制边框
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                // 绘制标签
+                ctx.fillStyle = 'white'; // 标签背景色
+                ctx.font = (10 * dpr) + 'px Arial';
+                const title = labels[label] + ' ' + confidence;
+                ctx.fillText(title, x1, y1 + 10 * dpr); // 标签显示位置
+            }
+
+            //---------------------------------------------------
             const video = document.getElementById('ai-video')
             if (!(video instanceof HTMLVideoElement)) {
                 return;
@@ -169,19 +252,6 @@
 
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
-
-
-            // 获取屏幕的 devicePixelRatio（如 Retina 屏幕有更高的 DPI）
-            // const dpr = window.devicePixelRatio || 1;
-            // // 设置 Canvas 的尺寸，使其分辨率更高（提高画质）
-            // canvas.width = video.clientWidth * dpr;
-            // canvas.height = video.clientHeight * dpr;
-            // // 设置 canvas 上下文的缩放，使其渲染的图像符合正常尺寸
-            // ctx.scale(dpr, dpr);
-            // // 设置高质量的渲染
-            // ctx.imageSmoothingEnabled = true; // 启用抗锯齿
-            // ctx.imageSmoothingQuality = 'high'; // 设置抗锯齿质量为高
-            // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
 
             //画布,直接画？//todo ,似乎行但是分辨率有点问题
@@ -238,10 +308,6 @@
                             }
                             return acc;
                         }, {});
-                        // 显示数量
-                        // document.getElementById('result').innerText = videoWidth + ',' + videoHeight +' -> '+ JSON.stringify(labelCounts);
-                        // const tips = window.devicePixelRatio + '-' + videoWidth + ',' + videoHeight + ' -> ' + JSON.stringify(data.detected_objects);
-                        // console.log(tips)
                         const tips = JSON.stringify(labelCounts);
                         document.getElementById('result').innerText = tips
 
@@ -268,25 +334,21 @@
                                     x2 = x2 * widthRatio;
                                     y2 = y2 * heightRatio;
 
-                                    // x2 = x2 * window.devicePixelRatio
-                                    // y2 = y2 * window.devicePixelRatio
-
-
-                                    const label = obj.label;
-
-                                    // 设置线框样式
-                                    ctx.strokeStyle = 'red'; // 线框颜色
-                                    ctx.lineWidth = 2 * dpr;
-                                    ctx.setLineDash([]); // 取消虚线
 
                                     // 绘制边框
-                                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                                    drawBoundingBox(ctx, [x1, y1, x2, y2], obj.label, obj.confidence.toFixed(3));
 
-                                    // 绘制标签
-                                    ctx.fillStyle = 'white'; // 标签背景色
-                                    ctx.font = (10 * dpr) + 'px Arial';
-                                    const title = labels[label] + ' ' + obj.confidence.toFixed(3);
-                                    ctx.fillText(title, x1, y1 + 10 * dpr); // 标签显示位置
+                                    // 绘制关键点
+                                    if (obj.keypoints && obj.keypoints.length > 0) {
+                                        const keypoints = obj.keypoints;
+                                        //所有的关键点直接乘以倍率
+                                        const newKeypoints = keypoints.map((point) => {
+                                            return [point[0] * widthRatio, point[1] * heightRatio];
+                                        });
+                                        drawKeypoints(ctx, newKeypoints);  // 画出关键点
+                                        drawSkeleton(ctx, newKeypoints);   // 画出骨架连线
+                                    }
+
                                 });
                         }
 
@@ -309,57 +371,6 @@
 
         }
 
-        // window.callApi1 = function () {
-        //     const tips = document.getElementById('tips');
-        //     const messages = {
-        //         model: ApiModel,
-        //         messages: [
-        //             {
-        //                 "role": "user",
-        //                 "content": [],
-        //             }
-        //         ]
-        //     }
-        //
-        //     if (cameraBuff && cameraBuff.length > 0) {
-        //         messages.messages[0].content.push({
-        //             fps: 1.0,
-        //             type: "video",
-        //             video: cameraBuff,
-        //         })
-        //     }
-        //     messages.messages[0].content.push({
-        //         "type": "text",
-        //         "text": tips.value
-        //     })
-        //
-        //     window.fetch(
-        //         ApiUrl,
-        //         {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'Authorization': 'Bearer ' + ApiKey
-        //             },
-        //             body: JSON.stringify(messages)
-        //         }
-        //     ).then(async res => {
-        //         const data = await res.json();
-        //         const ret = document.getElementById("result")
-        //         ret.value = JSON.stringify(data.choices[0].message.content);
-        //
-        //         // 根据状态继续回调
-        //         if (inferenceStatus) {
-        //             callApi();
-        //         }
-        //     }).catch(err => {
-        //         console.error(err)
-        //         // 根据状态继续回调
-        //         if (inferenceStatus) {
-        //             callApi();
-        //         }
-        //     });
-        // }
     })()
 
 </script>
